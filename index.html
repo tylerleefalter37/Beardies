@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DEAD RECKONING // Bearded Dragon Morph Empire</title>
+<style>
+    :root {
+        --bg-black: #000000;
+        --bg-panel: #090706;
+        --bg-card: #110d0b;
+        --bg-btn: #1a1411;
+        --bg-btn-hover: #291f1a;
+        --border: #2c221e;
+        --border-bright: #4a3831;
+        --text-main: #f0eae6;
+        --text-dim: #948277;
+        --amber: #ff9800;
+        --green: #66bb6a;
+        --red: #ef5350;
+        --cyan: #29b6f6;
+        --purple: #ab47bc;
+        --gold: #ffd54f;
+        --crimson: #ff5252;
+    }
+
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        font-family: 'Courier New', Courier, monospace;
+        background-color: var(--bg-black);
+        color: var(--text-main);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    /* TOP VITALS BAR */
+    #vitals {
+        flex: 0 0 auto;
+        background-color: var(--bg-panel);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 12px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        font-size: 0.82rem;
+    }
+    @media (min-width: 768px) {
+        #vitals {
+            grid-template-columns: repeat(6, 1fr);
+            font-size: 0.9rem;
+            padding: 10px 18px;
+        }
+    }
+    .vital-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        padding: 5px 8px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .vital-label { color: var(--text-dim); font-size: 0.75rem; }
+    .vital-val { font-weight: bold; color: var(--text-main); }
+    .vital-val.cash { color: var(--green); }
+    .vital-val.rep { color: var(--amber); }
+
+    /* NAVIGATION TABS */
+    #nav-tabs {
+        flex: 0 0 auto;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        background: var(--bg-black);
+        border-bottom: 1px solid var(--border);
+    }
+    .tab-btn {
+        background: var(--bg-panel);
+        color: var(--text-dim);
+        border: none;
+        border-right: 1px solid var(--border);
+        padding: 10px 4px;
+        font-family: inherit;
+        font-size: 0.75rem;
+        font-weight: bold;
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: background 0.15s, color 0.15s;
+    }
+    .tab-btn:last-child { border-right: none; }
+    .tab-btn.active {
+        background: var(--bg-black);
+        color: var(--amber);
+        border-bottom: 2px solid var(--amber);
+    }
+    @media (min-width: 768px) {
+        .tab-btn { font-size: 0.88rem; padding: 12px; }
+    }
+
+    /* MAIN WORKSPACE */
+    #workspace {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 10px;
+        background: var(--bg-black);
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* PANELS */
+    .panel {
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .panel-title {
+        font-size: 0.85rem;
+        color: var(--amber);
+        font-weight: bold;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 5px;
+    }
+
+    /* CARDS & GRIDS */
+    .card-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    @media (min-width: 700px) {
+        .card-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1100px) {
+        .card-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .dragon-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        position: relative;
+    }
+    .dragon-card.locked { border-color: #5d4037; }
+    .dragon-card.expo-picked { border-color: var(--gold); box-shadow: 0 0 6px rgba(255, 213, 79, 0.25); }
+    .dragon-card.worlds-first { border-color: var(--purple); }
+
+    .card-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* PROCEDURAL MORPH SWATCH */
+    .swatch {
+        width: 34px;
+        height: 34px;
+        border-radius: 4px;
+        border: 1px solid var(--border-bright);
+        flex-shrink: 0;
+    }
+
+    .dragon-info { flex: 1; min-width: 0; }
+    .dragon-name {
+        font-weight: bold;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .dragon-meta {
+        font-size: 0.74rem;
+        color: var(--text-dim);
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 2px;
+    }
+    .badge {
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 0.68rem;
+        font-weight: bold;
+        border: 1px solid var(--border);
+        background: #18120f;
+    }
+    .badge.male { color: var(--cyan); border-color: #164e63; }
+    .badge.female { color: #f48fb1; border-color: #880e4f; }
+    .badge.stage { color: var(--amber); }
+    .badge.wf { color: var(--purple); border-color: var(--purple); }
+    .badge.tex { color: #bcaaa4; border-color: #4e342e; }
+
+    .card-actions {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+        margin-top: 2px;
+    }
+
+    /* BUTTONS */
+    button {
+        background: var(--bg-btn);
+        color: var(--text-main);
+        border: 1px solid var(--border-bright);
+        padding: 7px 8px;
+        font-size: 0.76rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+        touch-action: manipulation;
+    }
+    button:hover { background: var(--bg-btn-hover); }
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-amber { border-color: var(--amber); color: var(--amber); }
+    .btn-green { border-color: var(--green); color: var(--green); }
+    .btn-red { border-color: var(--red); color: var(--red); }
+    .btn-purple { background: #1f0933; border-color: var(--purple); color: #e1bee7; font-weight: bold; }
+    .btn-gold-active { background: #2b2205; border-color: var(--gold); color: var(--gold); }
+
+    select, input[type="text"] {
+        background: var(--bg-card);
+        color: var(--text-main);
+        border: 1px solid var(--border-bright);
+        padding: 7px;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 0.8rem;
+        width: 100%;
+    }
+
+    /* 40-LANE MATRIX */
+    #lane-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        margin-top: 8px;
+    }
+    @media (min-width: 768px) {
+        #lane-grid { grid-template-columns: repeat(10, 1fr); }
+    }
+    .lane-cell {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 4px;
+        font-size: 0.66rem;
+        text-align: center;
+        transition: all 0.2s;
+    }
+    .lane-cell.bidding {
+        border-color: var(--green);
+        background: #071f09;
+        color: var(--green);
+    }
+    .lane-cell.war {
+        border-color: var(--amber);
+        background: #291502;
+        color: var(--amber);
+        font-weight: bold;
+    }
+    .lane-tier-1 { border-top: 2px solid var(--crimson); }
+    .lane-tier-2 { border-top: 2px solid var(--amber); }
+    .lane-tier-3 { border-top: 2px solid var(--green); }
+    .lane-tier-4 { border-top: 2px solid var(--text-dim); }
+
+    /* NARRATIVE LOG & FOOTER BAR */
+    #bottom-dock {
+        flex: 0 0 28%;
+        min-height: 150px;
+        max-height: 240px;
+        background: var(--bg-panel);
+        border-top: 2px solid var(--border);
+        display: flex;
+        flex-direction: column;
+    }
+    #quick-bar {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding: 6px 10px;
+        background: #050403;
+        border-bottom: 1px solid var(--border);
+    }
+    #log {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 12px;
+        font-size: 0.78rem;
+        line-height: 1.4;
+        background: var(--bg-black);
+    }
+    .log-entry { margin-bottom: 5px; }
+    .log-entry.system { color: var(--amber); font-weight: bold; }
+    .log-entry.success { color: var(--green); }
+    .log-entry.warning { color: var(--red); }
+    .log-entry.info { color: var(--cyan); }
+    .log-entry.god { color: var(--purple); font-weight: bold; text-shadow: 0 0 6px rgba(171, 71, 188, 0.5); }
+
+    .two-col {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    @media (min-width: 768px) {
+        .two-col { grid-template-columns: 1fr 1fr; }
+    }
+</style>
+</head>
+<body>
+
+<!-- TOP VITALS DASHBOARD -->
+<div id="vitals">
+    <div class="vital-box"><span class="vital-label">📅 DAY</span><span class="vital-val" id="v-day">1</span></div>
+    <div class="vital-box"><span class="vital-label">💵 CASH</span><span class="vital-val cash" id="v-cash">$1,000</span></div>
+    <div class="vital-box"><span class="vital-label">🦎 PVC RACKS</span><span class="vital-val" id="v-rack">2 / 10</span></div>
+    <div class="vital-box"><span class="vital-label">☀️ REP</span><span class="vital-val rep" id="v-rep">0</span></div>
+    <div class="vital-box"><span class="vital-label">🪳 BUG/GREENS</span><span class="vital-val" id="v-feed">0%</span></div>
+    <div class="vital-box"><span class="vital-label">⭐ EXPO / Q</span><span class="vital-val" id="v-expo">0/5 | Q:0</span></div>
+</div>
+
+<!-- NAVIGATION TABS -->
+<div id="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('rack', this)">🦎 RACK & PAIR</button>
+    <button class="tab-btn" onclick="switchTab('market', this)">🏷️ MARKET</button>
+    <button class="tab-btn" onclick="switchTab('bio', this)">🪳 BUGS & PODS</button>
+    <button class="tab-btn" onclick="switchTab('expo', this)">🏛️ 40-LANE EXPO</button>
+    <button class="tab-btn" onclick="switchTab('manual', this)">📖 MANUAL/GOD</button>
+</div>
+
+<!-- MAIN WORKSPACE -->
+<div id="workspace">
+
+    <!-- TAB 1: PVC BASKING RACKS & PUNNETT LAB -->
+    <div id="tab-rack" class="tab-pane active">
+        <div class="panel">
+            <div class="panel-title">
+                <span>🧬 POGONA BREEDING & PUNNETT LAB</span>
+                <span id="inc-status" style="font-size:0.75rem; color:var(--cyan);">Vermiculite Incubator: Standard (2 Hatchlings/Clutch)</span>
+            </div>
+            <div class="two-col">
+                <div>
+                    <label style="font-size:0.72rem; color:var(--text-dim);">SELECT HEAD-BOBBING SIRE (1.0 ADULT MALE)</label>
+                    <select id="select-sire" onchange="updatePunnettPreview()"></select>
+                </div>
+                <div>
+                    <label style="font-size:0.72rem; color:var(--text-dim);">SELECT GRAVID DAM (0.1 ADULT FEMALE)</label>
+                    <select id="select-dam" onchange="updatePunnettPreview()"></select>
+                </div>
+            </div>
+            <div id="punnett-preview" style="margin-top:8px; padding:8px; background:var(--bg-card); border:1px solid var(--border); border-radius:4px; font-size:0.76rem; color:var(--text-dim);">
+                Select an Adult 1.0 Sire and Adult 0.1 Dam to preview scale, eye, and color morph probabilities.
+            </div>
+            <div style="margin-top:8px; display:flex; gap:8px;">
+                <button class="btn-green" style="flex:2; font-weight:bold;" onclick="breedSelectedPair()">🥚 PAIR IN LAY-BOX & INCUBATE (+5 Days)</button>
+                <button class="btn-amber" style="flex:1;" onclick="upgradeRack()">+10 PVC BASKING RACK ($1,000)</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">
+                <span>🦎 PVC BASKING ENCLOSURES (<span id="rack-count-label">0</span>)</span>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="setRackFilter('all')" id="flt-all" class="btn-amber" style="padding:3px 7px; font-size:0.7rem;">ALL</button>
+                    <button onclick="setRackFilter('M')" id="flt-m" style="padding:3px 7px; font-size:0.7rem;">1.0 M</button>
+                    <button onclick="setRackFilter('F')" id="flt-f" style="padding:3px 7px; font-size:0.7rem;">0.1 F</button>
+                    <button onclick="setRackFilter('expo')" id="flt-expo" style="padding:3px 7px; font-size:0.7rem;">⭐ EXPO</button>
+                </div>
+            </div>
+            <div id="rack-grid" class="card-grid"></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: BARGAIN AUCTIONS & PRIVATE QUEUE -->
+    <div id="tab-market" class="tab-pane">
+        <div class="panel">
+            <div class="panel-title">
+                <span>🏷️ BARGAIN RESCUES & UNPROVEN 66% POS HETS</span>
+                <button onclick="refreshBargainMarket(true)">🔄 Scout Feed ($50)</button>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                Local breeder holdback releases, unproven "66% Possible Het Zero/Witblits/Hypo/Trans" clutchmates, and discounted rescues. Refreshes every 5 days.
+            </div>
+            <div id="bargain-grid" class="card-grid"></div>
+            <div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.78rem; color:var(--text-dim);">Import an unsorted bloodline box from an overseas breeder?</span>
+                <button class="btn-amber" onclick="buyBlindStock()">📦 Bloodline Import ($250)</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">
+                <span>📬 ALWAYS-OPEN PRIVATE SALE QUEUE (<span id="queue-count">0</span> / 5 Slots)</span>
+                <span style="font-size:0.74rem; color:var(--green);">Clears passively as days advance</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                List surplus dragons from your PVC Racks anytime for steady 100% market value + reputation bonus without waiting for a weekend Expo.
+            </div>
+            <div id="queue-grid" class="card-grid"></div>
+        </div>
+    </div>
+
+    <!-- TAB 3: DUBIA, GREENS & ARID BIOACTIVE ISOPODS -->
+    <div id="tab-bio" class="tab-pane">
+        <div class="two-col">
+            <div class="panel">
+                <div class="panel-title">
+                    <span>🪳 FEEDER INSECT & GREENS PRODUCTION</span>
+                    <span style="font-size:0.74rem; color:var(--green);" id="feeder-savings-label">Offsets $0/wk</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                    Hungry dragons eat mountains of bugs and greens ($20/dragon per feeding). Active Dubia and BSFL/Prickly Pear stations slash your bill and grow Hatchlings 2x faster.
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div class="dragon-card">
+                        <div class="card-top">
+                            <div class="swatch" style="background: repeating-linear-gradient(45deg, #3e2723, #3e2723 5px, #1b0f0d 5px, #1b0f0d 10px);"></div>
+                            <div class="dragon-info">
+                                <div class="dragon-name">Heated Dubia Roach Colony Towers</div>
+                                <div class="dragon-meta">Tier <span id="dubia-tier">0</span> | Covers <span id="dubia-cov">0</span> dragons/feeding</div>
+                            </div>
+                            <button class="btn-green" onclick="upgradeFeeder('dubia')">Upgrade ($<span id="dubia-cost">400</span>)</button>
+                        </div>
+                    </div>
+                    <div class="dragon-card">
+                        <div class="card-top">
+                            <div class="swatch" style="background: radial-gradient(circle, #8bc34a 30%, #33691e 100%);"></div>
+                            <div class="dragon-info">
+                                <div class="dragon-name">BSFL (CalciWorms) & Prickly Pear Greens</div>
+                                <div class="dragon-meta">Tier <span id="greens-tier">0</span> | Covers <span id="greens-cov">0</span> dragons + 2x Growth</div>
+                            </div>
+                            <button class="btn-green" onclick="upgradeFeeder('greens')">Upgrade ($<span id="greens-cost">350</span>)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">
+                    <span>☀️ T5 UVB LIGHTING, TIMERS & 8-FOOT TABLE</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                    Upgrade Arcadia T5 UVB arrays, proportional thermostat timers, and your 8-foot culture & display table.
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px;" id="hardware-list"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">
+                <span>🪲 ARID & BIOACTIVE ISOPOD / BEETLE STATION</span>
+                <span style="font-size:0.75rem; color:var(--amber);">📦 Harvested Expo Cups Ready: <strong id="iso-cups-ready">0</strong> ($<span id="iso-cups-val">0</span> est.)</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                Breed high-demand arid and tropical clean-up crews alongside your dragons. Harvest 25-count starter cups to sell locally or stack on your 8-Foot Expo Table!
+            </div>
+            <div id="isopod-grid" class="card-grid"></div>
+            <div style="margin-top:8px; display:flex; gap:8px;">
+                <button class="btn-green" style="flex:1;" onclick="sellHarvestedCupsDirect()">💵 Sell All Harvested Cups Locally</button>
+                <button class="btn-amber" style="flex:1;" onclick="harvestAllMaturePods()">✂️ Auto-Harvest All Bins (>100 pop)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: 8-FOOT EXPO TABLE & 40-LANE BIDDING FLOOR -->
+    <div id="tab-expo" class="tab-pane">
+        <div class="panel">
+            <div class="panel-title">
+                <span>🎪 8-FOOT VENDOR TABLE ("FIVE-PICK" DRAGON SHOWCASE)</span>
+                <span style="font-size:0.75rem; color:var(--gold);">Selected: <span id="expo-pick-count">0</span> / 5 Dragons + <span id="expo-iso-count">0</span> Bioactive Cups</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                Star (⭐) up to 5 standout Bearded Dragons in your PVC Rack to headline your 8-foot acrylic display cases. Bring harvested Isopod & Beetle cups for automatic walk-up sales!
+            </div>
+            <div id="expo-table-cards" class="card-grid"></div>
+            <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px;">
+                <button class="btn-amber" onclick="runSocialHype()">📸 Post Outdoor Sun-Fired Macros ($150) [Draws Red Monster Whales]</button>
+                <button class="btn-green" style="font-weight:bold; flex:1;" id="btn-start-expo" onclick="startExpoAuction()">🚀 OPEN 40-LANE LIVE EXPO AUCTION</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">
+                <span>🏛️ 40-LANE LIVE BIDDING FLOOR</span>
+                <span id="expo-round-label" style="color:var(--green);">Status: Standby</span>
+            </div>
+            <div style="display:flex; gap:10px; font-size:0.7rem; color:var(--text-dim); margin-bottom:6px; flex-wrap:wrap;">
+                <span><strong style="color:var(--crimson);">■ Lanes 1-5:</strong> Red Monster / Zero Whales</span>
+                <span><strong style="color:var(--amber);">■ Lanes 6-15:</strong> Project Breeders</span>
+                <span><strong style="color:var(--green);">■ Lanes 16-30:</strong> Dragon Keepers</span>
+                <span><strong style="color:var(--text-dim);">■ Lanes 31-40:</strong> Bargain Hunters</span>
+            </div>
+
+            <!-- TACTICAL LIVE CONTROLS -->
+            <div id="expo-live-controls" style="display:none; grid-template-columns: repeat(3, 1fr); gap:8px; margin-bottom:10px;">
+                <button class="btn-amber" onclick="advanceAuctionRound('hold')">⏱️ HOLD RESERVE (Next Bid Wave)</button>
+                <button class="btn-purple" onclick="advanceAuctionRound('hype')">☀️ BASKING LAMP FLARE (Rep Multiplier)</button>
+                <button class="btn-green" onclick="finalizeExpoSales()">🔨 GAVEL & SELL ALL LOTS</button>
+            </div>
+
+            <div id="lane-grid"></div>
+        </div>
+    </div>
+
+    <!-- TAB 5: MANUAL, SAVE & GOD MODE -->
+    <div id="tab-manual" class="tab-pane">
+        <div class="two-col">
+            <div class="panel">
+                <div class="panel-title"><span>📖 POGONA VITTICEPS BREEDER'S MANUAL</span></div>
+                <div style="font-size:0.78rem; line-height:1.5; color:var(--text-main);">
+                    <p><strong style="color:var(--amber);">1. 20-GENE SCALE, EYE & COLOR ENGINE:</strong> Tracks 20 genetic loci across Co-Dominant, Recessive, and Dominant dragon traits:
+                        <br>• <em>10 Co-Dominant Loci:</em> Leatherback (2 copies = scaleless <strong>Silkback</strong>), Red Monster, Citrus, German Giant, Sandfire, Paradox Mosaic, Phantom Stripe, Sunburst, Lavender, Barbata Cross.
+                        <br>• <em>6 Recessive Loci:</em> Zero (Patternless White/Silver), Witblits (Patternless Tan), Hypomelanistic (Clear Nails), Translucent (Jet-Black Eyes), Microscale, T+ Caramel Albino.
+                        <br>• <em>4 Dominant Loci:</em> Dunner (conical scales), Silverback, Blue-Bar Tiger, Wide-Back Spine.
+                        <br>• <em>Synergies & World's Firsts:</em> Specific combinations unlock famous morphs (<em>Wero</em>, <em>Hypo Trans Zero</em>, <em>Wine-Velvet Red Monster Leatherback</em>). Hatching any 4+ visual gene dragon logs a permanent <strong>WORLD'S FIRST</strong> 2x price multiplier!</p>
+                    <p><strong style="color:var(--amber);">2. SEXING, STAGES & PAIRING:</strong> Dragons roll as <code>1.0 Male</code> or <code>0.1 Female</code>. Hatchlings need 3 feedings to reach Juvenile and 6 feedings to reach Adult breeding size. Lock (🔒) your core breeders.</p>
+                    <p><strong style="color:var(--amber);">3. DUBIA, GREENS & BIOACTIVE CREWS:</strong> Dubia Roach and BSFL/Prickly Pear colonies offset your $20/dragon feeding bill. Cultivate <em>Dairy Cow</em>, <em>Armadillidium gestroi</em>, <em>Giant Canyon Isopods</em>, and <em>Blue Death Feigning Beetles</em> for expo side cash.</p>
+                </div>
+            </div>
+
+            <div>
+                <div class="panel">
+                    <div class="panel-title"><span>⚡ SANDBOX & GOD MODE</span></div>
+                    <div style="font-size:0.76rem; color:var(--text-dim); margin-bottom:8px;">
+                        Bypass the grind immediately: injects +$50,000 Cash, +100 PVC Rack Slots, +5,000 Reputation, boosts your Isopod/Beetle bins, and drops a 1.0 & 0.1 breeding pair of World's First 4-gene Red Monster Hypo Trans Zero dragons into your rack.
+                    </div>
+                    <button class="btn-purple" style="width:100%; padding:12px; font-size:0.9rem;" onclick="godMode()">⚡ INJECT GOD MODE OVERRIDE</button>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title"><span>💾 CROSS-DEVICE SAVE (PC ↔ iOS)</span></div>
+                    <div style="font-size:0.74rem; color:var(--text-dim); margin-bottom:6px;">
+                        Uses a dedicated Bearded Dragon save slot (`dead_reckoning_beardie_save_v1`) so it never overwrites your Ball Python or Pleco saves.
+                    </div>
+                    <input type="text" id="save-string-box" placeholder="Paste Bearded Dragon save code here or click Export..." style="margin-bottom:6px;">
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px;">
+                        <button class="btn-amber" onclick="exportSaveString()">📤 Export Copy</button>
+                        <button class="btn-green" onclick="importSaveString()">📥 Import Load</button>
+                        <button class="btn-red" onclick="hardResetSave()">🗑️ Wipe Save</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title"><span>🏆 WORLD'S FIRST DRAGON REGISTRY (<span id="wf-count">0</span>)</span></div>
+                    <div id="wf-list" style="font-size:0.75rem; color:var(--purple);">No 4+ gene World's First dragons hatched yet.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- PINNED NARRATIVE LOG & GLOBAL QUICK CONTROLS -->
+<div id="bottom-dock">
+    <div id="quick-bar">
+        <button class="btn-green" onclick="feedAndAdvanceDay()">🪳 Feed Bugs & Greens</button>
+        <button onclick="passDays(5)">⏩ Pass 5 Days</button>
+        <button class="btn-amber" onclick="harvestAllMaturePods()">🪲 Quick Harvest Pods</button>
+        <button class="btn-purple" onclick="godMode()">⚡ God Mode</button>
+    </div>
+    <div id="log">
+        <div class="log-entry system">>> DEAD RECKONING: BEARDED DRAGON MORPH ENGINE v1.0 ONLINE</div>
+        <div class="log-entry">20-Locus Scale/Eye/Color Punnett Lab, Dubia/Isopod Station & 40-Lane Expo Floor initialized.</div>
+    </div>
+</div>
+
+<script>
+/* ============================================================================
+   MASTER 20-GENE BEARDED DRAGON REGISTRY & SYNERGY DICTIONARY
+============================================================================ */
+const GENES = {
+    // 10 Incomplete Dominant (Co-Dom)
+    leatherback:  { name: "Leatherback",    superName: "Silkback (Scaleless)", type: "codom", baseVal: 320, color: "#ffab91" },
+    redMonster:   { name: "Red Monster",    superName: "Pure Blood Red Monster",type:"codom", baseVal: 650, color: "#b71c1c" },
+    citrus:       { name: "Citrus",         superName: "Hyper-Neon Citrus",    type: "codom", baseVal: 300, color: "#ffee58" },
+    germanGiant:  { name: "German Giant",   superName: "Titan German Giant",   type: "codom", baseVal: 350, color: "#bcaaa4" },
+    sandfire:     { name: "Sandfire",       superName: "Inferno Sandfire",     type: "codom", baseVal: 280, color: "#ff7043" },
+    paradox:      { name: "Paradox Mosaic", superName: "Eclipse Paradox",      type: "codom", baseVal: 450, color: "#ec407a" },
+    gStripe:      { name: "Phantom Stripe", superName: "Full Dorsal Ribbon",   type: "codom", baseVal: 300, color: "#ffd54f" },
+    sunburst:     { name: "Sunburst Gold",  superName: "24K Solar Flare",      type: "codom", baseVal: 320, color: "#ffb300" },
+    lavender:     { name: "Lavender Bar",   superName: "Pastel Purple Bar",    type: "codom", baseVal: 340, color: "#ce93d8" },
+    barbata:      { name: "Barbata Cross",  superName: "High-Contrast Barbata",type: "codom", baseVal: 420, color: "#78909c" },
+
+    // 6 Recessive
+    zero:         { name: "Zero",           type: "recessive", baseVal: 700, color: "#eceff1" },
+    witblits:     { name: "Witblits",       type: "recessive", baseVal: 550, color: "#ffe0b2" },
+    hypo:         { name: "Hypo",           type: "recessive", baseVal: 400, color: "#fff9c4" },
+    trans:        { name: "Translucent",    type: "recessive", baseVal: 450, color: "#4dd0e1" },
+    microscale:   { name: "Microscale",     type: "recessive", baseVal: 500, color: "#d7ccc8" },
+    albino:       { name: "T+ Caramel Albino",type:"recessive", baseVal: 600, color: "#ffe082" },
+
+    // 4 Dominant
+    dunner:       { name: "Dunner",         type: "dominant", baseVal: 350, color: "#a1887f" },
+    silverback:   { name: "Silverback",     type: "dominant", baseVal: 380, color: "#cfd8dc" },
+    tiger:        { name: "Blue-Bar Tiger", type: "dominant", baseVal: 320, color: "#64b5f6" },
+    wideBack:     { name: "Wide-Back Spine",type: "dominant", baseVal: 340, color: "#ffb74d" }
+};
+
+const SYNERGIES = {
+    "witblits,zero": "Wero (White-Out Witblits Zero)",
+    "hypo,trans,zero": "Hypo Trans Zero (Pure White Black-Eye)",
+    "hypo,zero": "Snow-White Hypo Zero",
+    "leatherback,redMonster": "Wine-Velvet Red Monster Leatherback",
+    "redMonster,trans": "Ruby-Glass Trans Red Monster",
+    "citrus,hypo,trans": "Neon Gummy-Bear Citrus",
+    "dunner,leatherback": "Velvet-Spined Leather Dunner",
+    "hypo,witblits": "Cream-Sand Hypo Witblits",
+    "citrus,tiger": "Radiant Blue-Bar Citrus Tiger",
+    "redMonster,zero": "Paradox Crimson-Ice Zero"
+};
+
+/* ============================================================================
+   DEFAULT GAME STATE
+============================================================================ */
+function getInitialState() {
+    return {
+        day: 1,
+        cash: 1000,
+        maxSpace: 10,
+        reputation: 0,
+        rackFilter: 'all',
+        hypeBonus: false,
+        worldsFirsts: [],
+        reptiles: [
+            {
+                id: 301,
+                sex: "M",
+                stage: "Adult",
+                meals: 6,
+                locked: true,
+                expo: false,
+                name: "Leatherback Het Zero Het Hypo Bearded Dragon",
+                genes: { leatherback: 1, zero: 1, hypo: 1 },
+                posHets: {},
+                value: 685,
+                worldsFirst: false
+            },
+            {
+                id: 302,
+                sex: "F",
+                stage: "Adult",
+                meals: 6,
+                locked: true,
+                expo: false,
+                name: "Red Monster Het Zero Het Hypo Bearded Dragon",
+                genes: { redMonster: 1, zero: 1, hypo: 1 },
+                posHets: {},
+                value: 1015,
+                worldsFirst: false
+            }
+        ],
+        privateQueue: [],
+        bargainMarket: [],
+        feeders: {
+            dubiaTier: 0,
+            greensTier: 0
+        },
+        hardware: {
+            uvbLights: false,
+            timers: false,
+            table8ft: false
+        },
+        isopods: {
+            dairyCow:  { name: "Dairy Cow Isopods (P. laevis)",   pop: 40, cupVal: 25, growthRate: 1.28, style: "radial-gradient(circle, #111 28%, #eee 30%)" },
+            gestroi:   { name: "Armadillidium gestroi",           pop: 20, cupVal: 60, growthRate: 1.18, style: "radial-gradient(circle, #ffd54f 22%, #263238 25%)" },
+            canyon:    { name: "Giant Canyon Arid Pods",          pop: 35, cupVal: 30, growthRate: 1.24, style: "repeating-linear-gradient(45deg, #5d4037, #5d4037 5px, #3e2723 5px, #3e2723 10px)" },
+            bdfb:      { name: "Blue Death Feigning Beetles",     pop: 15, cupVal: 65, growthRate: 1.15, style: "radial-gradient(circle, #90caf9 40%, #1e293b 85%)" }
+        },
+        harvestedCups: 0,
+        harvestedValue: 0
+    };
+}
+
+let state = getInitialState();
+let activeAuction = null;
+
+/* ============================================================================
+   UTILITIES, LOGGING & PERSISTENCE
+============================================================================ */
+function printLog(msg, type = "") {
+    const logEl = document.getElementById("log");
+    const div = document.createElement("div");
+    div.className = `log-entry ${type}`;
+    div.innerText = `[D${state.day}] > ${msg}`;
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+}
+
+function saveGame() {
+    try {
+        localStorage.setItem("dead_reckoning_beardie_save_v1", JSON.stringify(state));
+    } catch (e) {}
+}
+
+function loadGame() {
+    try {
+        const raw = localStorage.getItem("dead_reckoning_beardie_save_v1");
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            state = Object.assign(getInitialState(), parsed);
+        }
+    } catch (e) {
+        state = getInitialState();
+    }
+    if (!state.bargainMarket || state.bargainMarket.length === 0) {
+        generateBargainListings();
+    }
+}
+
+function exportSaveString() {
+    saveGame();
+    const str = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    const box = document.getElementById("save-string-box");
+    box.value = str;
+    box.select();
+    navigator.clipboard?.writeText(str);
+    printLog("Bearded Dragon save code exported and copied to clipboard!", "info");
+}
+
+function importSaveString() {
+    const box = document.getElementById("save-string-box");
+    const raw = box.value.trim();
+    if (!raw) return printLog("Paste a valid save string first.", "warning");
+    try {
+        const json = decodeURIComponent(escape(atob(raw)));
+        state = Object.assign(getInitialState(), JSON.parse(json));
+        saveGame();
+        renderAll();
+        printLog("Bearded Dragon save state successfully imported!", "success");
+    } catch (e) {
+        printLog("Invalid save string format.", "warning");
+    }
+}
+
+function hardResetSave() {
+    if (!confirm("Wipe your Bearded Dragon facility and restart on Day 1?")) return;
+    localStorage.removeItem("dead_reckoning_beardie_save_v1");
+    state = getInitialState();
+    generateBargainListings();
+    renderAll();
+    printLog("Dragon facility reset to Day 1.", "system");
+}
+
+/* ============================================================================
+   PROCEDURAL DRAGON SWATCH & GENETIC EVALUATION
+============================================================================ */
+function getMorphSwatchStyle(genes) {
+    const keys = Object.keys(genes).filter(k => genes[k] > 0);
+    if (keys.length === 0) {
+        return "repeating-linear-gradient(45deg, #8d6e63, #8d6e63 6px, #3e2723 6px, #3e2723 12px)";
+    }
+    if (genes.zero >= 2 && genes.hypo >= 2) {
+        return "radial-gradient(circle, #ffffff 65%, #cfd8dc 100%)";
+    }
+    if (genes.zero >= 2) {
+        return "linear-gradient(135deg, #eceff1 0%, #b0bec5 50%, #78909c 100%)";
+    }
+    const colors = [];
+    keys.forEach(k => {
+        const g = GENES[k];
+        if (!g) return;
+        if (g.type === "recessive" && genes[k] < 2) return;
+        colors.push(g.color);
+    });
+    if (colors.length === 0) {
+        return "repeating-linear-gradient(45deg, #a1887f, #a1887f 6px, #4e342e 6px, #4e342e 12px)";
+    }
+    if (colors.length === 1) {
+        return `repeating-linear-gradient(135deg, ${colors[0]}, ${colors[0]} 7px, #1f1410 7px, #1f1410 13px)`;
+    }
+    return `linear-gradient(135deg, ${colors.join(", ")})`;
+}
+
+function getScaleEyeBadges(genes) {
+    const tags = [];
+    if (genes.leatherback >= 2) tags.push("Silkback");
+    else if (genes.leatherback === 1 || genes.microscale >= 2) tags.push("Smooth Scale");
+    if (genes.dunner >= 1) tags.push("Dunner Beard");
+    if (genes.trans >= 2) tags.push("Black Alien Eyes");
+    if (genes.hypo >= 2) tags.push("Clear Nails");
+    return tags;
+}
+
+function evaluateReptile(genes, posHets = {}) {
+    let visualTraits = [];
+    let hetTraits = [];
+    let totalVal = 50;
+    let expressedVisualKeys = [];
+    let totalVisualLoci = 0;
+
+    const geneKeys = Object.keys(genes).filter(k => genes[k] > 0).sort();
+
+    for (let key of geneKeys) {
+        const count = genes[key];
+        const data = GENES[key];
+        if (!data) continue;
+
+        if (data.type === "codom") {
+            totalVisualLoci++;
+            expressedVisualKeys.push(key);
+            if (count >= 2) {
+                visualTraits.push(data.superName || `Super ${data.name}`);
+                totalVal += data.baseVal * 2.3;
+            } else {
+                visualTraits.push(data.name);
+                totalVal += data.baseVal;
+            }
+        } else if (data.type === "recessive") {
+            if (count >= 2) {
+                totalVisualLoci++;
+                expressedVisualKeys.push(key);
+                visualTraits.push(data.name);
+                totalVal += data.baseVal * 2.6;
+            } else {
+                hetTraits.push(`Het ${data.name}`);
+                totalVal += Math.floor(data.baseVal * 0.45);
+            }
+        } else if (data.type === "dominant") {
+            totalVisualLoci++;
+            expressedVisualKeys.push(key);
+            visualTraits.push(count >= 2 ? `Homo ${data.name}` : data.name);
+            totalVal += data.baseVal * (count >= 2 ? 1.6 : 1);
+        }
+    }
+
+    Object.keys(posHets).forEach(ph => {
+        if (GENES[ph] && !genes[ph]) {
+            hetTraits.push(`66% Pos Het ${GENES[ph].name}`);
+            totalVal += 70;
+        }
+    });
+
+    if (totalVisualLoci >= 3) totalVal = Math.floor(totalVal * 1.4);
+    if (totalVisualLoci >= 4) totalVal = Math.floor(totalVal * 1.85);
+
+    const sig = expressedVisualKeys.sort().join(",");
+    let baseTitle = "";
+    if (SYNERGIES[sig]) {
+        baseTitle = SYNERGIES[sig];
+        totalVal = Math.floor(totalVal * 1.3);
+    } else if (visualTraits.length > 0) {
+        baseTitle = visualTraits.join(" ");
+    } else {
+        baseTitle = "Central Normal";
+    }
+
+    const fullTitle = [baseTitle, ...hetTraits, "Bearded Dragon"].join(" ");
+    return {
+        name: fullTitle,
+        value: Math.round(totalVal),
+        visualLociCount: totalVisualLoci,
+        signature: sig
+    };
+}
+
+/* ============================================================================
+   BREEDING & 20-GENE MENDELIAN PUNNETT ENGINE
+============================================================================ */
+function updatePunnettPreview() {
+    const sireId = Number(document.getElementById("select-sire")?.value);
+    const damId = Number(document.getElementById("select-dam")?.value);
+    const box = document.getElementById("punnett-preview");
+    if (!box) return;
+
+    const sire = state.reptiles.find(r => r.id === sireId);
+    const dam = state.reptiles.find(r => r.id === damId);
+
+    if (!sire || !dam) {
+        box.innerHTML = "Select an Adult 1.0 Sire and Adult 0.1 Dam to preview Mendelian Punnett probabilities.";
+        return;
+    }
+
+    const allKeys = new Set([...Object.keys(sire.genes), ...Object.keys(dam.genes)]);
+    if (allKeys.size === 0) {
+        box.innerHTML = `<span style="color:var(--text-main);">Pairing: <strong>${sire.name}</strong> × <strong>${dam.name}</strong></span><br>Outcome: 100% Central Normal Dragons (+3% Spontaneous Paradox/Sport Drift chance).`;
+        return;
+    }
+
+    let breakdown = [];
+    allKeys.forEach(k => {
+        const g = GENES[k];
+        if (!g) return;
+        const a1 = sire.genes[k] || 0;
+        const a2 = dam.genes[k] || 0;
+        const p1 = a1 / 2;
+        const p2 = a2 / 2;
+        const prob2 = Math.round(p1 * p2 * 100);
+        const prob1 = Math.round((p1 * (1 - p2) + (1 - p1) * p2) * 100);
+        if (g.type === "recessive") {
+            breakdown.push(`<strong>${g.name} (Rec):</strong> ${prob2}% Visual | ${prob1}% Het`);
+        } else if (g.type === "codom") {
+            breakdown.push(`<strong>${g.name} (Co-Dom):</strong> ${prob2}% ${g.superName || 'Super'} | ${prob1}% Visual`);
+        } else {
+            breakdown.push(`<strong>${g.name} (Dom):</strong> ${prob1 + prob2}% Visual`);
+        }
+    });
+
+    box.innerHTML = `<div style="color:var(--amber); margin-bottom:4px;">Punnett Locus Forecast (${allKeys.size} Active Loci):</div>` + breakdown.join(" &nbsp;•&nbsp; ");
+}
+
+function breedSelectedPair() {
+    const sireId = Number(document.getElementById("select-sire")?.value);
+    const damId = Number(document.getElementById("select-dam")?.value);
+    const sire = state.reptiles.find(r => r.id === sireId);
+    const dam = state.reptiles.find(r => r.id === damId);
+
+    if (!sire || !dam) return printLog("Select both a valid Adult Sire (1.0) and Adult Dam (0.1) first!", "warning");
+    if (state.reptiles.length >= state.maxSpace) return printLog("PVC Basking Racks are full! Sell surplus or add a +10 PVC Rack.", "warning");
+
+    // Prove out any 66% Possible Hets on parents
+    [sire, dam].forEach(parent => {
+        if (parent.posHets && Object.keys(parent.posHets).length > 0) {
+            Object.keys(parent.posHets).forEach(k => {
+                if (Math.random() < 0.66) {
+                    parent.genes[k] = 1;
+                    printLog(`PROVEN OUT! ${parent.name} proved 100% Het ${GENES[k].name}!`, "info");
+                } else {
+                    printLog(`${parent.name} did not prove out for Pos Het ${GENES[k].name}.`, "warning");
+                }
+            });
+            parent.posHets = {};
+            const reEval = evaluateReptile(parent.genes, {});
+            parent.name = reEval.name;
+            parent.value = reEval.value;
+        }
+    });
+
+    const clutchSize = Math.min(state.maxSpace - state.reptiles.length, state.hardware.timers ? 3 : 2);
+    printLog(`🥚 Paired 1.0 ${sire.name} × 0.1 ${dam.name}! Incubating ${clutchSize} keeper eggs at 84°F...`, "system");
+
+    for (let e = 0; e < clutchSize; e++) {
+        let childGenes = {};
+        let allKeys = new Set([...Object.keys(sire.genes), ...Object.keys(dam.genes)]);
+
+        allKeys.forEach(k => {
+            const a1 = sire.genes[k] || 0;
+            const a2 = dam.genes[k] || 0;
+            const inherit1 = Math.random() < (a1 / 2) ? 1 : 0;
+            const inherit2 = Math.random() < (a2 / 2) ? 1 : 0;
+            if (inherit1 + inherit2 > 0) {
+                childGenes[k] = inherit1 + inherit2;
+            }
+        });
+
+        // 3% Spontaneous Paradox / Sport Mutation check
+        if (Math.random() < 0.03) {
+            const allPool = Object.keys(GENES);
+            const bonusGene = allPool[Math.floor(Math.random() * allPool.length)];
+            childGenes[bonusGene] = (childGenes[bonusGene] || 0) + 1;
+            printLog(`⚡ SPONTANEOUS PARADOX DRIFT! Egg #${e + 1} expressed unexpected ${GENES[bonusGene].name} genetics!`, "god");
+        }
+
+        const evaluated = evaluateReptile(childGenes);
+        let isWF = false;
+        let finalName = evaluated.name;
+        let finalVal = evaluated.value;
+
+        if (evaluated.visualLociCount >= 4 && !state.worldsFirsts.includes(evaluated.name)) {
+            state.worldsFirsts.push(evaluated.name);
+            isWF = true;
+            finalName = `WORLD'S FIRST: ${evaluated.name}`;
+            finalVal = Math.round(finalVal * 2.0);
+            state.reputation += 250;
+            printLog(`🏆 WORLD'S FIRST DRAGON HATCHED! ${finalName} logged (+250 Rep)!`, "god");
+        }
+
+        const sex = Math.random() < 0.5 ? "M" : "F";
+        state.reptiles.push({
+            id: Date.now() + Math.floor(Math.random() * 10000) + e,
+            sex: sex,
+            stage: "Hatchling",
+            meals: 0,
+            locked: isWF,
+            expo: false,
+            name: finalName,
+            genes: childGenes,
+            posHets: {},
+            value: finalVal,
+            worldsFirst: isWF
+        });
+        state.reputation += 8;
+        printLog(`Hatched [${sex === 'M' ? '1.0' : '0.1'}]: ${finalName} (Est: $${finalVal})`, "success");
+    }
+
+    passDays(5);
+}
+
+/* ============================================================================
+   RACK CONTROLS & PRIVATE QUEUE
+============================================================================ */
+function setRackFilter(flt) {
+    state.rackFilter = flt;
+    ["all", "M", "F", "expo"].forEach(k => {
+        const btn = document.getElementById(`flt-${k.toLowerCase()}`);
+        if (btn) btn.className = (flt === k) ? "btn-amber" : "";
+    });
+    renderRack();
+}
+
+function toggleLock(id) {
+    const r = state.reptiles.find(x => x.id === id);
+    if (!r) return;
+    r.locked = !r.locked;
+    if (r.locked) r.expo = false;
+    saveGame();
+    renderAll();
+}
+
+function toggleExpoStar(id) {
+    const r = state.reptiles.find(x => x.id === id);
+    if (!r) return;
+    if (!r.expo) {
+        const currentExpo = state.reptiles.filter(x => x.expo).length;
+        if (currentExpo >= 5) return printLog("Your 8-Foot Expo Table holds a maximum of 5 flagship dragons!", "warning");
+        r.locked = false;
+        r.expo = true;
+        printLog(`Placed ${r.name} in 8-Foot Expo Acrylic Showcase (${currentExpo + 1}/5).`, "info");
+    } else {
+        r.expo = false;
+    }
+    saveGame();
+    renderAll();
+}
+
+function sendToPrivateQueue(id) {
+    const idx = state.reptiles.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    const r = state.reptiles[idx];
+    if (r.locked) return printLog("Unlock Holdback status (🔒) before listing for sale.", "warning");
+    if (state.privateQueue.length >= 5) return printLog("Private Sale Queue is full (5/5)! Advance days to clear buyers.", "warning");
+
+    r.expo = false;
+    state.reptiles.splice(idx, 1);
+    state.privateQueue.push(r);
+    printLog(`Listed ${r.name} on the Private Classifieds Queue ($${r.value} + Rep bonus).`, "info");
+    saveGame();
+    renderAll();
+}
+
+function cancelQueueListing(id) {
+    if (state.reptiles.length >= state.maxSpace) return printLog("PVC Racks are full!", "warning");
+    const idx = state.privateQueue.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    const r = state.privateQueue.splice(idx, 1)[0];
+    state.reptiles.push(r);
+    saveGame();
+    renderAll();
+}
+
+/* ============================================================================
+   BARGAIN MARKET & BLOODLINE IMPORTS
+============================================================================ */
+function generateBargainListings() {
+    const pool = Object.keys(GENES);
+    const listings = [];
+    const tags = [
+        { label: "Local Breeder Holdback Release", disc: 0.65, posHet: false },
+        { label: "Unproven 66% Pos Het Clutchmate", disc: 0.52, posHet: true },
+        { label: "Slightly Nippy Tail-Nip Discount", disc: 0.58, posHet: false },
+        { label: "Surplus Basking Rack Clearout", disc: 0.72, posHet: false }
+    ];
+
+    for (let i = 0; i < 4; i++) {
+        const tag = tags[i];
+        const g1 = pool[Math.floor(Math.random() * pool.length)];
+        let genes = {};
+        let posHets = {};
+
+        if (tag.posHet) {
+            const recPool = ["zero", "witblits", "hypo", "trans", "microscale", "albino"];
+            const recPick = recPool[Math.floor(Math.random() * recPool.length)];
+            genes[g1] = 1;
+            posHets[recPick] = 1;
+        } else {
+            genes[g1] = GENES[g1].type === "recessive" ? (Math.random() < 0.35 ? 2 : 1) : 1;
+            if (Math.random() < 0.45) {
+                const g2 = pool[Math.floor(Math.random() * pool.length)];
+                if (g2 !== g1) genes[g2] = 1;
+            }
+        }
+
+        const evalData = evaluateReptile(genes, posHets);
+        const askPrice = Math.max(95, Math.round(evalData.value * tag.disc));
+        listings.push({
+            id: Date.now() + i + Math.floor(Math.random() * 9999),
+            tag: tag.label,
+            sex: Math.random() < 0.5 ? "M" : "F",
+            stage: Math.random() < 0.6 ? "Adult" : "Juvenile",
+            meals: 6,
+            name: evalData.name,
+            genes: genes,
+            posHets: posHets,
+            value: evalData.value,
+            askPrice: askPrice
+        });
+    }
+    state.bargainMarket = listings;
+}
+
+function refreshBargainMarket(paid = false) {
+    if (paid) {
+        if (state.cash < 50) return printLog("Need $50 to scout new bargain dragon listings.", "warning");
+        state.cash -= 50;
+    }
+    generateBargainListings();
+    printLog("Scouted 4 fresh Bearded Dragon listings on the Bargain Feed.", "info");
+    saveGame();
+    renderAll();
+}
+
+function buyBargainListing(id) {
+    const idx = state.bargainMarket.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    const item = state.bargainMarket[idx];
+    if (state.cash < item.askPrice) return printLog(`Insufficient cash! Need $${item.askPrice}.`, "warning");
+    if (state.reptiles.length >= state.maxSpace) return printLog("PVC Racks are full!", "warning");
+
+    state.cash -= item.askPrice;
+    state.bargainMarket.splice(idx, 1);
+    state.reptiles.push({
+        id: item.id,
+        sex: item.sex,
+        stage: item.stage,
+        meals: item.stage === "Adult" ? 6 : 3,
+        locked: false,
+        expo: false,
+        name: item.name,
+        genes: item.genes,
+        posHets: item.posHets || {},
+        value: item.value,
+        worldsFirst: false
+    });
+    state.reputation += 5;
+    printLog(`Sniped Bargain Dragon: ${item.name} for $${item.askPrice} (Est Value: $${item.value})!`, "success");
+    saveGame();
+    renderAll();
+}
+
+function buyBlindStock() {
+    if (state.cash < 250) return printLog("Need $250 for a blind bloodline import.", "warning");
+    if (state.reptiles.length >= state.maxSpace) return printLog("No PVC rack space available!", "warning");
+
+    state.cash -= 250;
+    const keys = Object.keys(GENES);
+    const k1 = keys[Math.floor(Math.random() * keys.length)];
+    let genes = {};
+    genes[k1] = GENES[k1].type === "recessive" ? 1 : (Math.random() > 0.8 ? 2 : 1);
+    if (Math.random() > 0.65) {
+        const k2 = keys[Math.floor(Math.random() * keys.length)];
+        if (k2 !== k1) genes[k2] = 1;
+    }
+
+    const evaluated = evaluateReptile(genes);
+    const sex = Math.random() < 0.5 ? "M" : "F";
+    state.reptiles.push({
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        sex: sex,
+        stage: "Adult",
+        meals: 6,
+        locked: false,
+        expo: false,
+        name: evaluated.name,
+        genes: genes,
+        posHets: {},
+        value: evaluated.value,
+        worldsFirst: false
+    });
+    state.reputation += 5;
+    printLog(`Bloodline Import arrived: [${sex === 'M' ? '1.0' : '0.1'}] ${evaluated.name} ($${evaluated.value} est).`, "success");
+    passDays(1);
+}
+
+/* ============================================================================
+   FEEDER COLONIES, ARID ISOPODS & HARDWARE
+============================================================================ */
+function getFeederCoverageCount() {
+    return (state.feeders.dubiaTier * 4) + (state.feeders.greensTier * 3);
+}
+
+function upgradeFeeder(type) {
+    if (type === "dubia") {
+        const cost = (state.feeders.dubiaTier + 1) * 400;
+        if (state.cash < cost) return printLog(`Need $${cost} to expand Dubia Roach Towers.`, "warning");
+        state.cash -= cost;
+        state.feeders.dubiaTier++;
+        printLog(`Heated Dubia Roach Towers upgraded to Tier ${state.feeders.dubiaTier}!`, "success");
+    } else {
+        const cost = (state.feeders.greensTier + 1) * 350;
+        if (state.cash < cost) return printLog(`Need $${cost} to expand BSFL & Prickly Pear Hydroponics.`, "warning");
+        state.cash -= cost;
+        state.feeders.greensTier++;
+        printLog(`BSFL & Prickly Pear Greens upgraded to Tier ${state.feeders.greensTier}! Hatchlings mature 2x faster.`, "success");
+    }
+    saveGame();
+    renderAll();
+}
+
+function buyHardware(key, cost, label) {
+    if (state.hardware[key]) return;
+    if (state.cash < cost) return printLog(`Need $${cost} for ${label}.`, "warning");
+    state.cash -= cost;
+    state.hardware[key] = true;
+    state.reputation += 25;
+    printLog(`Installed ${label}! Isopod/Beetle growth & clutch sizes increased.`, "success");
+    saveGame();
+    renderAll();
+}
+
+function harvestPodBin(key) {
+    const bin = state.isopods[key];
+    if (!bin || bin.pop < 60) return printLog(`${bin.name} needs at least 60 population before harvesting a 25-count starter cup.`, "warning");
+    bin.pop -= 25;
+    state.harvestedCups += 1;
+    state.harvestedValue += bin.cupVal;
+    printLog(`Harvested 1x ${bin.name} culture cup (+$${bin.cupVal} Expo/Direct value).`, "success");
+    saveGame();
+    renderAll();
+}
+
+function harvestAllMaturePods() {
+    let totalHarvested = 0;
+    Object.keys(state.isopods).forEach(k => {
+        const bin = state.isopods[k];
+        while (bin.pop >= 100) {
+            bin.pop -= 25;
+            state.harvestedCups += 1;
+            state.harvestedValue += bin.cupVal;
+            totalHarvested++;
+        }
+    });
+    if (totalHarvested === 0) {
+        printLog("No Isopod or Beetle bins are above the 100-population auto-harvest threshold yet.", "warning");
+    } else {
+        printLog(`Auto-harvested ${totalHarvested} bioactive culture cups! Ready for Expo or local sale.`, "success");
+    }
+    saveGame();
+    renderAll();
+}
+
+function sellHarvestedCupsDirect() {
+    if (state.harvestedCups <= 0) return printLog("No harvested culture cups in stock! Harvest from your bins first.", "warning");
+    const payout = state.harvestedValue;
+    const count = state.harvestedCups;
+    state.cash += payout;
+    state.reputation += count * 2;
+    state.harvestedCups = 0;
+    state.harvestedValue = 0;
+    printLog(`Sold ${count} bioactive isopod/beetle cups to local dragon keepers for $${payout}!`, "success");
+    saveGame();
+    renderAll();
+}
+
+/* ============================================================================
+   TIME, FEEDING & GROWTH LOOP
+============================================================================ */
+function feedAndAdvanceDay() {
+    const totalDragons = state.reptiles.length;
+    const covered = getFeederCoverageCount();
+    const uncovered = Math.max(0, totalDragons - covered);
+    const feedBill = uncovered * 20;
+
+    if (state.cash < feedBill) {
+        printLog(`⚠️ Insufficient cash for Dubia & greens ($${feedBill} needed)! Sell stock or use God Mode.`, "warning");
+        return;
+    }
+
+    state.cash -= feedBill;
+
+    const growthBoost = state.feeders.greensTier > 0 ? 2 : 1;
+    let maturedCount = 0;
+    state.reptiles.forEach(r => {
+        if (r.stage !== "Adult") {
+            r.meals = (r.meals || 0) + growthBoost;
+            if (r.meals >= 6 && r.stage !== "Adult") {
+                r.stage = "Adult";
+                maturedCount++;
+            } else if (r.meals >= 3 && r.stage === "Hatchling") {
+                r.stage = "Juvenile";
+            }
+        }
+    });
+
+    printLog(`Fed ${totalDragons} dragons calcium-dusted Dubia & greens (Colonies covered ${Math.min(totalDragons, covered)}, Cost: $${feedBill}).`);
+    if (maturedCount > 0) {
+        printLog(`🦎 ${maturedCount} Bearded Dragon(s) reached full Adult breeding weight!`, "success");
+    }
+
+    passDays(1);
+}
+
+function passDays(days = 1) {
+    for (let d = 0; d < days; d++) {
+        state.day += 1;
+
+        let hwBonus = 1.0 + (state.hardware.uvbLights ? 0.05 : 0) + (state.hardware.timers ? 0.06 : 0) + (state.hardware.table8ft ? 0.08 : 0);
+        Object.keys(state.isopods).forEach(k => {
+            const bin = state.isopods[k];
+            const dailyFactor = 1 + ((bin.growthRate * hwBonus - 1) * 0.25);
+            bin.pop = Math.min(2500, Math.round(bin.pop * dailyFactor) + 2);
+        });
+
+        if (state.privateQueue.length > 0 && Math.random() < 0.65) {
+            const sold = state.privateQueue.shift();
+            const repBonus = Math.min(500, Math.floor(state.reputation * 0.8));
+            const price = sold.value + repBonus;
+            state.cash += price;
+            state.reputation += 4;
+            printLog(`📬 Private Classifieds Sale: ${sold.name} purchased for $${price}!`, "success");
+        }
+
+        if (state.day % 5 === 0) {
+            generateBargainListings();
+        }
+    }
+    saveGame();
+    renderAll();
+}
+
+function upgradeRack() {
+    if (state.cash < 1000) return printLog("Insufficient funds for 4x2x2 PVC Basking Rack tower. Need $1,000.", "warning");
+    state.cash -= 1000;
+    state.maxSpace += 10;
+    printLog("Installed new 10-Bay PVC Basking Rack with halogen flood lamps! Capacity +10.", "success");
+    saveGame();
+    renderAll();
+}
+
+/* ============================================================================
+   8-FOOT EXPO TABLE & 40-LANE LIVE BIDDING FLOOR
+============================================================================ */
+function runSocialHype() {
+    if (state.hypeBonus) return printLog("Outdoor sun-fired macro photos are already viral on the dragon groups!", "info");
+    if (state.cash < 150) return printLog("Need $150 to run a sponsored morph showcase reel.", "warning");
+    state.cash -= 150;
+    state.hypeBonus = true;
+    state.reputation += 15;
+    printLog("📸 Posted natural sunlight macro shots! Red Monster & Zero Whales (Lanes 1-5) are locked in for your next Expo.", "info");
+    saveGame();
+    renderAll();
+}
+
+function startExpoAuction() {
+    const picks = state.reptiles.filter(r => r.expo);
+    if (picks.length === 0 && state.harvestedCups === 0) {
+        return printLog("Star (⭐) up to 5 dragons in your Rack or bring harvested Isopod/Beetle cups before opening the 40-Lane Expo!", "warning");
+    }
+
+    if (state.harvestedCups > 0) {
+        const tableBonus = state.hardware.table8ft ? 1.35 : 1.15;
+        const podRevenue = Math.round(state.harvestedValue * tableBonus);
+        state.cash += podRevenue;
+        state.reputation += state.harvestedCups * 3;
+        printLog(`🎪 8-Foot Table Walk-Ups: Sold all ${state.harvestedCups} Bioactive Isopod & Beetle cups for $${podRevenue}!`, "success");
+        state.harvestedCups = 0;
+        state.harvestedValue = 0;
+    }
+
+    if (picks.length === 0) {
+        saveGame();
+        renderAll();
+        return;
+    }
+
+    const lanes = [];
+    for (let i = 1; i <= 40; i++) {
+        let tier = 4, label = "Bargain";
+        if (i <= 5) { tier = 1; label = "Whale"; }
+        else if (i <= 15) { tier = 2; label = "Breeder"; }
+        else if (i <= 30) { tier = 3; label = "Keeper"; }
+        lanes.push({ lane: i, tier, label, activePickIdx: -1, bid: 0, war: false });
+    }
+
+    const lots = picks.map(p => ({
+        snake: p,
+        currentBid: Math.round(p.value * 0.85),
+        highLane: Math.floor(Math.random() * 40) + 1
+    }));
+
+    activeAuction = {
+        round: 1,
+        maxRounds: 3,
+        lots: lots,
+        lanes: lanes
+    };
+
+    simulateLaneWave(1.0);
+    document.getElementById("expo-live-controls").style.display = "grid";
+    document.getElementById("btn-start-expo").disabled = true;
+    printLog(`🏛️ 40-LANE EXPO FLOOR OPENED! ${lots.length} showcase dragon(s) under the basking lamps.`, "system");
+    renderExpo();
+}
+
+function simulateLaneWave(intensity = 1.0) {
+    if (!activeAuction) return;
+    const repFactor = 1 + Math.min(0.75, state.reputation / 2000) + (state.hypeBonus ? 0.25 : 0);
+
+    activeAuction.lanes.forEach(l => { l.activePickIdx = -1; l.war = false; });
+
+    activeAuction.lots.forEach((lot, idx) => {
+        const bump = Math.round((lot.snake.value * (0.14 + Math.random() * 0.18)) * intensity * repFactor);
+        lot.currentBid += bump;
+
+        const numBidders = Math.min(8, 3 + Math.floor(lot.snake.value / 600));
+        for (let b = 0; b < numBidders; b++) {
+            let laneNum;
+            if (lot.snake.value >= 1000 && Math.random() < 0.65) {
+                laneNum = Math.floor(Math.random() * 15) + 1;
+            } else {
+                laneNum = Math.floor(Math.random() * 40) + 1;
+            }
+            const laneObj = activeAuction.lanes[laneNum - 1];
+            laneObj.activePickIdx = idx + 1;
+            laneObj.bid = lot.currentBid;
+            if (b === 0) {
+                lot.highLane = laneNum;
+                laneObj.war = true;
+            }
+        }
+    });
+}
+
+function advanceAuctionRound(action) {
+    if (!activeAuction) return;
+    if (activeAuction.round >= activeAuction.maxRounds) {
+        return finalizeExpoSales();
+    }
+    activeAuction.round++;
+    let mult = 1.0;
+    if (action === "hype") {
+        mult = 1.35;
+        printLog(`☀️ Cranked the basking halogens! The dragons fired up to peak neon contrast—bidding war erupts!`, "info");
+    } else {
+        printLog(`⏱️ Held firm on reserves! Entering Bidding Wave ${activeAuction.round}/${activeAuction.maxRounds}...`);
+    }
+    simulateLaneWave(mult);
+    if (activeAuction.round >= activeAuction.maxRounds) {
+        finalizeExpoSales();
+    } else {
+        renderExpo();
+    }
+}
+
+function finalizeExpoSales() {
+    if (!activeAuction) return;
+    let totalEarned = 0;
+
+    activeAuction.lots.forEach(lot => {
+        totalEarned += lot.currentBid;
+        const idx = state.reptiles.findIndex(r => r.id === lot.snake.id);
+        if (idx !== -1) state.reptiles.splice(idx, 1);
+        printLog(`🔨 SOLD [Lane #${lot.highLane}]: ${lot.snake.name} hammered at $${lot.currentBid.toLocaleString()}!`, "success");
+    });
+
+    state.cash += totalEarned;
+    state.reputation += activeAuction.lots.length * 15;
+    state.hypeBonus = false;
+    activeAuction = null;
+
+    document.getElementById("expo-live-controls").style.display = "none";
+    document.getElementById("btn-start-expo").disabled = false;
+    printLog(`🏛️ Expo concluded! Total 40-Lane Hammer Payout: $${totalEarned.toLocaleString()}.`, "system");
+    passDays(2);
+}
+
+/* ============================================================================
+   GOD MODE OVERRIDE
+============================================================================ */
+function godMode() {
+    state.cash += 50000;
+    state.maxSpace += 100;
+    state.reputation += 5000;
+
+    Object.keys(state.isopods).forEach(k => {
+        state.isopods[k].pop += 200;
+    });
+    state.harvestedCups += 10;
+    state.harvestedValue += 450;
+
+    const godGenes = { redMonster: 2, leatherback: 1, zero: 2, trans: 2 };
+    const evaluated = evaluateReptile(godGenes);
+    const wfName = `WORLD'S FIRST: ${evaluated.name}`;
+
+    if (!state.worldsFirsts.includes(evaluated.name)) {
+        state.worldsFirsts.push(evaluated.name);
+    }
+
+    ["M", "F"].forEach((sex, idx) => {
+        state.reptiles.push({
+            id: Date.now() + idx + Math.floor(Math.random() * 9999),
+            sex: sex,
+            stage: "Adult",
+            meals: 6,
+            locked: false,
+            expo: false,
+            name: wfName,
+            genes: { ...godGenes },
+            posHets: {},
+            value: evaluated.value * 3,
+            worldsFirst: true
+        });
+    });
+
+    printLog("!!! ⚡ GOD MODE INJECTED ⚡ !!!", "god");
+    printLog("+$50,000 Cash | +100 PVC Rack Space | +5,000 Reputation | +200 All Isopods & Beetles", "god");
+    printLog(`Injected 1.0 & 0.1 Breeding Pair: ${wfName} ($${(evaluated.value * 3).toLocaleString()} ea)`, "god");
+
+    saveGame();
+    renderAll();
+}
+
+/* ============================================================================
+   UI RENDERING FUNCTIONS
+============================================================================ */
+function switchTab(tabName, btnEl) {
+    document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById(`tab-${tabName}`).classList.add("active");
+    if (btnEl) btnEl.classList.add("active");
+    renderAll();
+}
+
+function renderVitals() {
+    document.getElementById("v-day").innerText = state.day;
+    document.getElementById("v-cash").innerText = `$${state.cash.toLocaleString()}`;
+    document.getElementById("v-rack").innerText = `${state.reptiles.length} / ${state.maxSpace}`;
+    document.getElementById("v-rep").innerText = state.reputation.toLocaleString();
+
+    const totalDragons = Math.max(1, state.reptiles.length);
+    const covPct = Math.min(100, Math.round((getFeederCoverageCount() / totalDragons) * 100));
+    document.getElementById("v-feed").innerText = `${covPct}%`;
+
+    const expoCount = state.reptiles.filter(r => r.expo).length;
+    document.getElementById("v-expo").innerText = `${expoCount}/5 | Q:${state.privateQueue.length}`;
+}
+
+function renderRack() {
+    document.getElementById("rack-count-label").innerText = `${state.reptiles.length} / ${state.maxSpace}`;
+    document.getElementById("inc-status").innerText = state.hardware.timers
+        ? "Incubator: Herpstat Proportional (3 Keeper Eggs/Clutch)"
+        : "Incubator: Standard Vermiculite (2 Keeper Eggs/Clutch)";
+
+    const sireSel = document.getElementById("select-sire");
+    const damSel = document.getElementById("select-dam");
+    const prevSire = sireSel.value;
+    const prevDam = damSel.value;
+
+    const adultMales = state.reptiles.filter(r => r.sex === "M" && r.stage === "Adult");
+    const adultFemales = state.reptiles.filter(r => r.sex === "F" && r.stage === "Adult");
+
+    sireSel.innerHTML = adultMales.map(m => `<option value="${m.id}">1.0 ${m.name} ($${m.value})</option>`).join("") || `<option value="">No Adult 1.0 Males</option>`;
+    damSel.innerHTML = adultFemales.map(f => `<option value="${f.id}">0.1 ${f.name} ($${f.value})</option>`).join("") || `<option value="">No Adult 0.1 Females</option>`;
+
+    if (prevSire && adultMales.some(m => String(m.id) === prevSire)) sireSel.value = prevSire;
+    if (prevDam && adultFemales.some(f => String(f.id) === prevDam)) damSel.value = prevDam;
+    updatePunnettPreview();
+
+    let list = state.reptiles;
+    if (state.rackFilter === "M") list = list.filter(r => r.sex === "M");
+    else if (state.rackFilter === "F") list = list.filter(r => r.sex === "F");
+    else if (state.rackFilter === "expo") list = list.filter(r => r.expo);
+
+    const grid = document.getElementById("rack-grid");
+    grid.innerHTML = list.map(r => {
+        const swatchStyle = getMorphSwatchStyle(r.genes);
+        const sexBadge = r.sex === "M" ? `<span class="badge male">1.0 M</span>` : `<span class="badge female">0.1 F</span>`;
+        const wfBadge = r.worldsFirst ? `<span class="badge wf">🏆 WF</span>` : "";
+        const texBadges = getScaleEyeBadges(r.genes).map(t => `<span class="badge tex">${t}</span>`).join("");
+        return `
+        <div class="dragon-card ${r.locked ? 'locked' : ''} ${r.expo ? 'expo-picked' : ''} ${r.worldsFirst ? 'worlds-first' : ''}">
+            <div class="card-top">
+                <div class="swatch" style="background: ${swatchStyle};"></div>
+                <div class="dragon-info">
+                    <div class="dragon-name" title="${r.name}">${r.name}</div>
+                    <div class="dragon-meta">
+                        ${sexBadge}
+                        <span class="badge stage">${r.stage}</span>
+                        ${texBadges}
+                        ${wfBadge}
+                        <span style="color:var(--green); font-weight:bold;">$${r.value.toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button onclick="toggleLock(${r.id})" class="${r.locked ? 'btn-amber' : ''}">${r.locked ? '🔒 Hold' : '🔓 Open'}</button>
+                <button onclick="toggleExpoStar(${r.id})" class="${r.expo ? 'btn-gold-active' : ''}">${r.expo ? '⭐ Table' : '☆ Expo'}</button>
+                <button onclick="sendToPrivateQueue(${r.id})" ${r.locked ? 'disabled' : ''}>📬 Queue</button>
+                <button class="btn-green" onclick="quickSellWholesale(${r.id})" ${r.locked ? 'disabled' : ''}>💵 $${Math.round(r.value * 0.7)}</button>
+            </div>
+        </div>`;
+    }).join("");
+}
+
+function quickSellWholesale(id) {
+    const idx = state.reptiles.findIndex(r => r.id === id);
+    if (idx === -1) return;
+    const r = state.reptiles[idx];
+    if (r.locked) return;
+    const price = Math.round(r.value * 0.7);
+    state.reptiles.splice(idx, 1);
+    state.cash += price;
+    printLog(`Instant Wholesale: Liquidated ${r.name} for $${price}.`, "success");
+    saveGame();
+    renderAll();
+}
+
+function renderMarket() {
+    const bGrid = document.getElementById("bargain-grid");
+    bGrid.innerHTML = state.bargainMarket.map(item => {
+        const swatchStyle = getMorphSwatchStyle(item.genes);
+        const sexBadge = item.sex === "M" ? `<span class="badge male">1.0 M</span>` : `<span class="badge female">0.1 F</span>`;
+        return `
+        <div class="dragon-card">
+            <div style="font-size:0.68rem; color:var(--amber); font-weight:bold;">⚡ ${item.tag}</div>
+            <div class="card-top">
+                <div class="swatch" style="background: ${swatchStyle};"></div>
+                <div class="dragon-info">
+                    <div class="dragon-name">${item.name}</div>
+                    <div class="dragon-meta">
+                        ${sexBadge}
+                        <span class="badge stage">${item.stage}</span>
+                        <span>Est Val: $${item.value}</span>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-green" style="width:100%; font-weight:bold;" onclick="buyBargainListing(${item.id})">
+                Snipe Listing for $${item.askPrice}
+            </button>
+        </div>`;
+    }).join("") || `<div style="color:var(--text-dim); font-size:0.8rem;">All bargain listings sniped! Advance days or click Scout Feed.</div>`;
+
+    document.getElementById("queue-count").innerText = state.privateQueue.length;
+    const qGrid = document.getElementById("queue-grid");
+    qGrid.innerHTML = state.privateQueue.map(r => `
+        <div class="dragon-card">
+            <div class="card-top">
+                <div class="swatch" style="background: ${getMorphSwatchStyle(r.genes)};"></div>
+                <div class="dragon-info">
+                    <div class="dragon-name">${r.name}</div>
+                    <div class="dragon-meta">Asking: <strong style="color:var(--green);">$${r.value} + Rep</strong></div>
+                </div>
+                <button class="btn-red" onclick="cancelQueueListing(${r.id})">Return</button>
+            </div>
+        </div>
+    `).join("") || `<div style="color:var(--text-dim); font-size:0.8rem;">No dragons currently in the Private Sale Queue.</div>`;
+}
+
+function renderBioactive() {
+    document.getElementById("dubia-tier").innerText = state.feeders.dubiaTier;
+    document.getElementById("dubia-cov").innerText = state.feeders.dubiaTier * 4;
+    document.getElementById("dubia-cost").innerText = (state.feeders.dubiaTier + 1) * 400;
+
+    document.getElementById("greens-tier").innerText = state.feeders.greensTier;
+    document.getElementById("greens-cov").innerText = state.feeders.greensTier * 3;
+    document.getElementById("greens-cost").innerText = (state.feeders.greensTier + 1) * 350;
+
+    const saved = getFeederCoverageCount() * 20;
+    document.getElementById("feeder-savings-label").innerText = `Offsets up to $${saved}/feeding`;
+
+    const hwItems = [
+        { key: "uvbLights", cost: 300, name: "Arcadia T5 HO 14% UVB Dragon Arrays (+5% Culture Growth)" },
+        { key: "timers", cost: 450, name: "Herpstat Dimming Basking Timers (+6% Pods & +1 Egg/Clutch)" },
+        { key: "table8ft", cost: 600, name: "8-Foot Acrylic Expo Showcase Table (+35% Expo Cup Payout)" }
+    ];
+    document.getElementById("hardware-list").innerHTML = hwItems.map(h => `
+        <div class="dragon-card" style="flex-direction:row; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.78rem;">${h.name}</span>
+            ${state.hardware[h.key]
+                ? `<span class="badge" style="color:var(--green); border-color:var(--green);">INSTALLED</span>`
+                : `<button class="btn-amber" onclick="buyHardware('${h.key}',${h.cost}, '${h.name}')">Buy ($${h.cost})</button>`}
+        </div>
+    `).join("");
+
+    document.getElementById("iso-cups-ready").innerText = state.harvestedCups;
+    document.getElementById("iso-cups-val").innerText = state.harvestedValue;
+
+    const iGrid = document.getElementById("isopod-grid");
+    iGrid.innerHTML = Object.keys(state.isopods).map(k => {
+        const bin = state.isopods[k];
+        return `
+        <div class="dragon-card">
+            <div class="card-top">
+                <div class="swatch" style="background: ${bin.style};"></div>
+                <div class="dragon-info">
+                    <div class="dragon-name">${bin.name}</div>
+                    <div class="dragon-meta">
+                        <span>Pop: <strong style="color:var(--amber);">${bin.pop}</strong></span>
+                        <span>Cup Value: <strong style="color:var(--green);">$${bin.cupVal}</strong></span>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-amber" onclick="harvestPodBin('${k}')" ${bin.pop < 60 ? 'disabled' : ''}>
+                ✂️ Harvest 25-Count Cup (Req 60 pop)
+            </button>
+        </div>`;
+    }).join("");
+}
+
+function renderExpo() {
+    const picks = state.reptiles.filter(r => r.expo);
+    document.getElementById("expo-pick-count").innerText = picks.length;
+    document.getElementById("expo-iso-count").innerText = state.harvestedCups;
+
+    const tCards = document.getElementById("expo-table-cards");
+    if (picks.length === 0) {
+        tCards.innerHTML = `<div style="color:var(--text-dim); font-size:0.8rem;">No showcase dragons starred (⭐) yet! Go to <strong>RACK & PAIR</strong> and star up to 5 Bearded Dragons for your 8-foot table.</div>`;
+    } else {
+        tCards.innerHTML = picks.map((p, idx) => {
+            const lot = activeAuction?.lots.find(l => l.snake.id === p.id);
+            return `
+            <div class="dragon-card expo-picked">
+                <div class="card-top">
+                    <div class="swatch" style="background: ${getMorphSwatchStyle(p.genes)};"></div>
+                    <div class="dragon-info">
+                        <div class="dragon-name">Case #${idx + 1}: ${p.name}</div>
+                        <div class="dragon-meta">
+                            <span>Base Est: $${p.value.toLocaleString()}</span>
+                            ${lot ? `<span style="color:var(--green); font-weight:bold;">🔥 Live Bid: $${lot.currentBid.toLocaleString()} (Lane #${lot.highLane})</span>` : ""}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }).join("");
+    }
+
+    const roundLbl = document.getElementById("expo-round-label");
+    if (activeAuction) {
+        roundLbl.innerText = `LIVE BIDDING WAVE ${activeAuction.round} / ${activeAuction.maxRounds}`;
+    } else {
+        roundLbl.innerText = state.hypeBonus ? "Status: Sun-Fired Hype Active (+25% Bids)" : "Status: Ready for Weekend Expo";
+    }
+
+    const lGrid = document.getElementById("lane-grid");
+    const lanesData = activeAuction ? activeAuction.lanes : Array.from({ length: 40 }, (_, i) => ({
+        lane: i + 1,
+        tier: i < 5 ? 1 : (i < 15 ? 2 : (i < 30 ? 3 : 4)),
+        label: i < 5 ? "Whale" : (i < 15 ? "Breeder" : (i < 30 ? "Keeper" : "Bargain")),
+        activePickIdx: -1,
+        bid: 0,
+        war: false
+    }));
+
+    lGrid.innerHTML = lanesData.map(l => {
+        const stateClass = l.war ? "war" : (l.activePickIdx > 0 ? "bidding" : "");
+        return `
+        <div class="lane-cell lane-tier-${l.tier} ${stateClass}">
+            <div>L#${l.lane} ${l.label}</div>
+            <div style="margin-top:2px;">
+                ${l.activePickIdx > 0 ? `Case #${l.activePickIdx}<br>$${l.bid}` : "Idle"}
+            </div>
+        </div>`;
+    }).join("");
+}
+
+function renderManual() {
+    document.getElementById("wf-count").innerText = state.worldsFirsts.length;
+    const wfEl = document.getElementById("wf-list");
+    if (state.worldsFirsts.length > 0) {
+        wfEl.innerHTML = state.worldsFirsts.map(w => `<div>🏆 ${w}</div>`).join("");
+    } else {
+        wfEl.innerText = "No 4+ gene World's First dragons hatched yet.";
+    }
+}
+
+function renderAll() {
+    renderVitals();
+    renderRack();
+    renderMarket();
+    renderBioactive();
+    renderExpo();
+    renderManual();
+}
+
+loadGame();
+renderAll();
+</script>
+</body>
+</html>
